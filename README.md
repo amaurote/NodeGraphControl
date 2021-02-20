@@ -101,4 +101,4 @@ public class SampleNode : AbstractNode {
 
 ### License
 
-This piece of software is licensed under [MIT License](../master/License.md)
+This piece of software is licensed under [MIT License](../master/LICENSE)
