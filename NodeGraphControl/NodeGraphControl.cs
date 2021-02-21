@@ -285,17 +285,19 @@ namespace NodeGraphControl {
             Graphics g = e.Graphics;
 
             g.PageUnit = GraphicsUnit.Pixel;
-            g.CompositingQuality = CompositingQuality.GammaCorrected;
+            // GammaCorrected makes it slow
+            // g.CompositingQuality = CompositingQuality.GammaCorrected;
+            g.CompositingQuality = CompositingQuality.HighSpeed;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
+            
             UpdateMatrices();
             g.Transform = transformation;
 
             OnDrawBackground(e);
 
-            // temp corsair
+            // temp crosshair
             var pW = new Pen(Color.Gray, 3f);
             g.DrawLine(pW, -_gridStep, 0, _gridStep, 0);
             g.DrawLine(pW, 0, -_gridStep, 0, _gridStep);
@@ -876,7 +878,7 @@ namespace NodeGraphControl {
             }
 
             // show bounds (dev)
-            if ((e.KeyData & Keys.X) == Keys.X) {
+            if (e.KeyCode == Keys.X) {
                 _renderBounds = true;
                 Refresh();
             }

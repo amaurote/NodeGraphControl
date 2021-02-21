@@ -249,7 +249,7 @@ namespace NodeGraphControl.Elements {
         private enum Alignment {
             Left,
             Right,
-            Center // just in case... why not have a option to align to center
+            Center // just in case... why not have an option to align to center
         }
 
         private Font SocketCaptionFont = new Font(new FontFamily("Helvetica"), 10f, FontStyle.Bold);
@@ -307,7 +307,7 @@ namespace NodeGraphControl.Elements {
 
         private void DropShadow(Graphics g, GraphicsPath path) {
             // g.SmoothingMode = SmoothingMode.AntiAlias;
-
+            
             // Change in alpha between pens.
             const float delta = (ShadowMaxOpacity / ShadowSteps) / ShadowSteps;
 
