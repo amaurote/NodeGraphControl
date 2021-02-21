@@ -17,7 +17,7 @@ Initial version.
 ### Goals
 
 1. ~~Improve graphic performance~~ (resolved 21.2.21)
-2. Fix zoom - it should be transforming towards center of the screen
+2. ~~Fix zoom - it should be transforming towards center of the screen~~ (resolved 21.2.21 - wow, such a productive Sunday)
 3. Make wires selectable
 4. Create new element 'SocketHub' - basically an input socket capable to be connected by multiple wires (requires point 3. to be completed)
 5. Code refactoring, spaghetti resolving
