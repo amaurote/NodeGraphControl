@@ -22,6 +22,13 @@ Initial version.
 4. Create new element 'SocketHub' - basically an input socket capable to be connected by multiple wires (requires point 3. to be completed)
 5. Code refactoring, spaghetti resolving
 
+### Improvements
+
+* Graphic quality now depends on zoom value (the GDI+ had lower frame rate due to transparency while zoomed in)
+* Zoom is now operating towards the center of the screen
+* 'F' key focuses view to selection
+* Space key now resets view position
+
 ## UI controls
 
 **Left mouse button** - select, marque select, move, wiring
