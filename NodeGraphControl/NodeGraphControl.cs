@@ -139,17 +139,17 @@ namespace NodeGraphControl {
             None
         }
 
-        private EGridStyle _eGridStyleStyle = EGridStyle.Grid;
+        private EGridStyle _gridStyle = EGridStyle.Grid;
 
         [Description("The type of rendered grid"), Category("Appearance"), DisplayName("Grid Style")]
         public EGridStyle GridStyle {
-            get { return _eGridStyleStyle; }
+            get { return _gridStyle; }
             set {
-                if (_eGridStyleStyle == value)
+                if (_gridStyle == value)
                     return;
 
-                _eGridStyleStyle = value;
-                this.Invalidate();
+                _gridStyle = value;
+                Invalidate();
             }
         }
 
@@ -164,7 +164,7 @@ namespace NodeGraphControl {
                     return;
 
                 _gridStep = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -183,7 +183,7 @@ namespace NodeGraphControl {
                 _gridColor = value;
                 _gridPen = new Pen(_gridColor);
                 _gridBrush = new SolidBrush(_gridColor);
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -234,24 +234,19 @@ namespace NodeGraphControl {
             zoom = Utils.Clamp(0.25f, 4.00f, zoom);
             // zoom = Utils.Clamp(1f, 1f, zoom); // locked
 
-            var center = new PointF(this.Width / 2.0f, this.Height / 2.0f);
             transformation.Reset();
             transformation.Translate(translation.X, translation.Y);
-            // transformation.Translate(center.X, center.Y);
             transformation.Scale(zoom, zoom);
-            // transformation.Translate(-center.X, -center.Y);
 
             inverse_transformation.Reset();
-            // inverse_transformation.Translate(center.X, center.Y);
             inverse_transformation.Scale(1.0f / zoom, 1.0f / zoom);
-            // inverse_transformation.Translate(-center.X, -center.Y);
             inverse_transformation.Translate(-translation.X, -translation.Y);
         }
 
         #endregion
 
         #region GetTransformedLocation
-
+        // TODO refactor
         private PointF GetTransformedLocation() {
             var points = new[] {snappedLocation};
             inverse_transformation.TransformPoints(points);
@@ -285,9 +280,11 @@ namespace NodeGraphControl {
             Graphics g = e.Graphics;
 
             g.PageUnit = GraphicsUnit.Pixel;
-            // GammaCorrected makes it slow
-            // g.CompositingQuality = CompositingQuality.GammaCorrected;
-            g.CompositingQuality = CompositingQuality.HighSpeed;
+
+            // CompositingQuality dependent on zoom value.
+            // Close view uses HightSpeed, distant view is GammaCorrected (high quality)
+            g.CompositingQuality = zoom <= 1f ? CompositingQuality.GammaCorrected : CompositingQuality.HighSpeed;
+
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
@@ -393,7 +390,7 @@ namespace NodeGraphControl {
 
             e.Graphics.Clear(Color.FromArgb(23, 25, 31));
 
-            if (_eGridStyleStyle == EGridStyle.None)
+            if (_gridStyle == EGridStyle.None)
                 return;
 
             var points = new PointF[] {
@@ -412,7 +409,7 @@ namespace NodeGraphControl {
             var largeYOffset = ((float) Math.Round(top / _gridStep) * _gridStep);
 
             // grid
-            if (_eGridStyleStyle == EGridStyle.Grid) {
+            if (_gridStyle == EGridStyle.Grid) {
                 for (var x = largeXOffset; x < right; x += _gridStep)
                     g.DrawLine(_gridPen, x, top, x, bottom);
 
@@ -421,7 +418,7 @@ namespace NodeGraphControl {
             }
 
             // dots
-            if (_eGridStyleStyle == EGridStyle.Dots) {
+            if (_gridStyle == EGridStyle.Dots) {
                 for (var x = largeXOffset; x < right; x += _gridStep)
                 for (var y = largeYOffset; y < bottom; y += _gridStep)
                     g.FillRectangle(_gridBrush, x, y, 2, 2);
@@ -452,41 +449,21 @@ namespace NodeGraphControl {
         protected override void OnMouseWheel(MouseEventArgs e) {
             base.OnMouseWheel(e);
 
-            // zoom *= (float) Math.Pow(2, e.Delta / 480.0f);
-
-            float centeredMousePositionX = e.X - (this.Size.Width / 2.0f);
-            float centeredMousePositionY = e.Y - (this.Size.Height / 2.0f);
+            var center = new PointF(this.Width / 2f, this.Height / 2f);
+            var centerTranslated = GetTranslatedPosition(center);
 
             // zoom in (mouse wheel ↑)
             if (e.Delta > 0) {
                 zoom += 0.25f;
-
-                // var deltaX = (centeredMousePositionX) / zoom;
-                // var deltaY = (centeredMousePositionY) / zoom;
-                // translation.X -= deltaX * zoom;
-                // translation.Y -= deltaY * zoom;
-
-                // attemp 1
-                // translation.X += centeredMousePositionX * zoom;
-                // translation.Y += centeredMousePositionY * zoom;
             }
 
             // zoom out (mouse wheel ↓)
             if (e.Delta < 0) {
                 zoom -= 0.25f;
-
-                // attemp 2
-                // var deltaX = (centeredMousePositionX) / zoom;
-                // var deltaY = (centeredMousePositionY) / zoom;
-                // translation.X += -deltaX * zoom;
-                // translation.Y += -deltaY * zoom;
-
-                // attemp 1
-                // translation.X -= centeredMousePositionX * zoom;
-                // translation.Y -= centeredMousePositionY * zoom;
             }
-
-            Refresh();
+            
+            UpdateMatrices();
+            FocusView(centerTranslated);
         }
 
         #endregion
@@ -642,22 +619,6 @@ namespace NodeGraphControl {
             var deltaY = (lastLocation.Y - currentLocation.Y) / zoom;
 
             switch (_command) {
-                case CommandMode.ScaleView:
-                    if (!mouseMoved) {
-                        if ((Math.Abs(deltaY) > 1))
-                            mouseMoved = true;
-                    }
-
-                    if (mouseMoved &&
-                        (Math.Abs(deltaY) > 0)) {
-                        zoom *= (float) Math.Pow(2, deltaY / 100.0f);
-                        Cursor.Position = this.PointToScreen(lastLocation);
-                        snappedLocation = //lastLocation = 
-                            currentLocation;
-                        Invalidate();
-                    }
-
-                    return;
                 case CommandMode.TranslateView: {
                     if (!mouseMoved) {
                         if ((Math.Abs(deltaX) > 1) ||
@@ -844,30 +805,16 @@ namespace NodeGraphControl {
 
         #endregion
 
-        /*
-         * This translates mouse click real position to relative position in matrix
-         */
-        private PointF GetTranslatedPosition(Point mouseClick) {
-            var points = new PointF[] {mouseClick};
-            inverse_transformation.TransformPoints(points);
-            return points[0];
-        }
-
-        private PointF GetOriginalPosition(PointF transformed) {
-            var points = new PointF[] {transformed};
-            transformation.TransformPoints(points);
-            return points[0];
-        }
-
         #region OnKeyDown
 
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
 
-            // translate to center
+            // reset view
             if (e.KeyCode == Keys.Space) {
                 translation.X = (Width / 2f);
                 translation.Y = (Height / 2f);
+                zoom = 1f; // TODO create default constant somewhere
                 Refresh();
             }
 
@@ -881,6 +828,26 @@ namespace NodeGraphControl {
             if (e.KeyCode == Keys.X) {
                 _renderBounds = true;
                 Refresh();
+            }
+            
+            // focus view to center of the selection
+            if (e.KeyCode == Keys.F) {
+
+                int count = 0;
+                double x = 0, y = 0;
+
+                foreach (var node in _graphNodes.Where(node => node.Selected)) {
+                    x += node.Pivot.X;
+                    y += node.Pivot.Y;
+                    count++;
+                }
+                
+                if(count == 0)
+                    return;
+
+                var avgPoint = new PointF((float) (x / count), (float) (y / count));
+                
+                FocusView(avgPoint);
             }
 
             // back to edit mode
@@ -928,6 +895,33 @@ namespace NodeGraphControl {
 
         #endregion
 
+        #region SpaceInMatrix
+
+        private void FocusView(PointF focusPoint) {
+            var translatedLocation = GetOriginalPosition(new PointF(focusPoint.X, focusPoint.Y));
+            translation.X -= translatedLocation.X - Width / 2f;
+            translation.Y -= translatedLocation.Y - Height / 2f;
+            Invalidate();
+        }
+        
+        private PointF GetTranslatedPosition(Point mouseClick) {
+            var points = new PointF[] {mouseClick};
+            inverse_transformation.TransformPoints(points);
+            return points[0];
+        }
+        
+        private PointF GetTranslatedPosition(PointF positionInsideClip) {
+            var points = new PointF[] {positionInsideClip};
+            inverse_transformation.TransformPoints(points);
+            return points[0];
+        }
+
+        private PointF GetOriginalPosition(PointF transformed) {
+            var points = new[] {transformed};
+            transformation.TransformPoints(points);
+            return points[0];
+        }
+
         private IElement FindElementAtOriginal(PointF point) {
             foreach (var node in _graphNodes) {
                 // find socket    
@@ -964,6 +958,8 @@ namespace NodeGraphControl {
 
             return null;
         }
+
+        #endregion
 
         #region ContextMenu
 

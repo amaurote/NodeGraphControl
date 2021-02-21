@@ -1,0 +1,11 @@
+.gitignore
+/.idea/
+/TestProject/obj/
+/NodeGraphControl/obj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
