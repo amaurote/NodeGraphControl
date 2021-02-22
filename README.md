@@ -24,10 +24,12 @@ Initial version.
 
 ### Improvements
 
-* Graphic quality now depends on zoom value (the GDI+ had lower frame rate due to transparency while zoomed in)
-* Zoom is now operating towards the center of the screen
-* 'F' key focuses view to selection
-* Space key now resets view position
+* (21.2.21) Graphic quality now depends on zoom value (the GDI+ had lower frame rate due to transparency while zoomed in)
+* (21.2.21) Zoom is now operating towards the center of the screen
+* (21.2.21) 'F' key focuses view to selection
+* (21.2.21) Space key now resets view position
+* (22.2.21) Added feature to optionally pair types with colors in which wires and sockets will be drown
+* (22.2.21) Added experimental wire style appearance properties 
 
 ## UI controls
 
