@@ -45,6 +45,10 @@ namespace TestProject {
             nodeGraphControl.AddContextNodeType<NodeMonitor>("Monitor", "ToString()", "");
             nodeGraphControl.AddContextNodeType<NodeLogicOscillator>("Logic Oscillator", "This node provides oscillating binary output", "Generators");
 
+            // set type colors
+            nodeGraphControl.AddTypeColorPair<char>(Color.DodgerBlue);
+            nodeGraphControl.AddTypeColorPair<bool>(Color.LightGray);
+            
             // run
             nodeGraphControl.Run();
         }

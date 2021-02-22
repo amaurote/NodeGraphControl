@@ -45,6 +45,8 @@ namespace TestProject {
             this.nodeGraphControl.Size = new System.Drawing.Size(662, 729);
             this.nodeGraphControl.TabIndex = 1;
             this.nodeGraphControl.Text = "nodeGraphControl";
+            this.nodeGraphControl.WireMiddlePointsSpread = 0;
+            this.nodeGraphControl.WireStyle = NodeGraphControl.NodeGraphControl.EWireStyle.Bezier;
             this.nodeGraphControl.SelectionChanged += new System.EventHandler<System.Collections.Generic.List<NodeGraphControl.Elements.AbstractNode>>(this.NodeGraph_SelectionChanged);
             this.nodeGraphControl.Paint += new System.Windows.Forms.PaintEventHandler(this.nodeGraphControl_Paint);
             // 

@@ -122,6 +122,10 @@ namespace NodeGraphControl {
             HandleSelection();
         }
 
+        public void AddTypeColorPair<T>(Color color) {
+            CommonStates.TypeColor.Add(typeof(T), color);
+        }
+
         #endregion
 
         #region Events
@@ -277,21 +281,23 @@ namespace NodeGraphControl {
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
 
+            // initialization and settings
             Graphics g = e.Graphics;
 
             g.PageUnit = GraphicsUnit.Pixel;
-
-            // CompositingQuality dependent on zoom value.
-            // Close view uses HightSpeed, distant view is GammaCorrected (high quality)
-            g.CompositingQuality = zoom <= 1f ? CompositingQuality.GammaCorrected : CompositingQuality.HighSpeed;
-
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             
+            // CompositingQuality dependent on zoom value.
+            // Close view uses HightSpeed, distant view is GammaCorrected (high quality)
+            g.CompositingQuality = zoom <= 1f ? CompositingQuality.GammaCorrected : CompositingQuality.HighSpeed;
+
+            // update matrices
             UpdateMatrices();
             g.Transform = transformation;
 
+            // draw background
             OnDrawBackground(e);
 
             // temp crosshair
@@ -299,25 +305,30 @@ namespace NodeGraphControl {
             g.DrawLine(pW, -_gridStep, 0, _gridStep, 0);
             g.DrawLine(pW, 0, -_gridStep, 0, _gridStep);
 
+            // return if no nodes
             if (_graphNodes.Count == 0)
                 return;
 
+            // set smoothing mode quality
             g.SmoothingMode = SmoothingMode.HighQuality;
 
+            // draw all wires
             foreach (var wire in _connections) {
                 var xFrom = wire.From.BoundsFull.X + wire.From.BoundsFull.Width / 2f;
                 var yFrom = wire.From.BoundsFull.Y + wire.From.BoundsFull.Height / 2f;
                 var xTo = wire.To.BoundsFull.X + wire.To.BoundsFull.Width / 2;
                 var yTo = wire.To.BoundsFull.Y + wire.To.BoundsFull.Height / 2;
 
-                DrawWire(g, new Pen(Color.Fuchsia, 2f), xFrom, yFrom, xTo, yTo);
+                var wireColor = CommonStates.GetColorByType(wire.From.ValueType);
+                DrawWire(g, new Pen(wireColor, 2f), xFrom, yFrom, xTo, yTo);
             }
 
+            // draw all nodes
             foreach (var node in _graphNodes) {
                 node.Draw(g);
             }
 
-            // temp render bounds
+            // render bounds
             if (_renderBounds) {
                 foreach (var node in _graphNodes) {
                     foreach (var socket in node.Sockets) {
@@ -326,15 +337,13 @@ namespace NodeGraphControl {
                             socket.BoundsFull.Height);
                     }
 
-                    g.DrawRectangle(new Pen(Color.Aqua), node.BoundsHeader.X, node.BoundsHeader.Y,
-                        node.BoundsHeader.Width, node.BoundsHeader.Height);
-                    g.DrawRectangle(new Pen(Color.Aqua), node.BoundsBase.X, node.BoundsBase.Y, node.BoundsBase.Width,
-                        node.BoundsBase.Height);
-                    g.DrawRectangle(new Pen(Color.Aqua), node.BoundsFooter.X, node.BoundsFooter.Y,
-                        node.BoundsFooter.Width, node.BoundsFooter.Height);
+                    g.DrawRectangle(new Pen(Color.Aqua), node.BoundsHeader.X, node.BoundsHeader.Y, node.BoundsHeader.Width, node.BoundsHeader.Height);
+                    g.DrawRectangle(new Pen(Color.Aqua), node.BoundsBase.X, node.BoundsBase.Y, node.BoundsBase.Width, node.BoundsBase.Height);
+                    g.DrawRectangle(new Pen(Color.Aqua), node.BoundsFooter.X, node.BoundsFooter.Y, node.BoundsFooter.Width, node.BoundsFooter.Height);
                 }
             }
 
+            // draw new wire during wiring mode
             if (_command == CommandMode.Wiring && _tempWire != null) {
                 float xFrom, yFrom, xTo, yTo;
 
@@ -357,6 +366,7 @@ namespace NodeGraphControl {
                 }
             }
 
+            // draw marque
             if (_command == CommandMode.MarqueSelection) {
                 var marqueRectangle = GetMarqueRectangle();
                 g.FillRectangle(new SolidBrush(Color.FromArgb(15, 64, 64, 127)), marqueRectangle);
@@ -364,21 +374,69 @@ namespace NodeGraphControl {
                     marqueRectangle.Height);
             }
         }
+        
+        // wire style
+        public enum EWireStyle {
+            Bezier, Line, StepLine
+        }
+
+        private EWireStyle _wireStyle = EWireStyle.Bezier;
+
+        [Description("The style in which wires will be drown"), Category("Experimental")]
+        public EWireStyle WireStyle {
+            get { return _wireStyle; }
+            set {
+                if (_wireStyle == value)
+                    return;
+
+                _wireStyle = value;
+                Invalidate();
+            }
+        }
+        
+        // wire middle points spread (percentage)
+        private int _wireMiddlePointsSpread = 0;
+
+        [Description("The middle point of wires spread in percentages"), Category("Experimental")]
+        public int WireMiddlePointsSpread {
+            get { return _wireMiddlePointsSpread; }
+            set {
+                var tempValue = Math.Min(100, Math.Max(0, value));
+                if(_wireMiddlePointsSpread == tempValue)
+                    return;
+
+                _wireMiddlePointsSpread = tempValue;
+                Invalidate();
+            }
+        }
 
         private void DrawWire(Graphics g, Pen pen, float xFrom, float yFrom, float xTo, float yTo) {
             var from = new PointF(xFrom, yFrom);
             var to = new PointF(xTo, yTo);
 
-            var distance = to.X - from.X;
+            if (_wireStyle == EWireStyle.Line) {
+                g.DrawLine(pen, from, to);
+                return;
+            }
 
-            var fromHalf = new PointF(from.X + distance / 2, from.Y);
-            var toHalf = new PointF(from.X + distance / 2, to.Y);
+            var distance = to.X - from.X;
+            var spreadDistance = ((distance / 2f) / 100f) * _wireMiddlePointsSpread;
+            
+            var fromHalf = new PointF(from.X + distance / 2 - spreadDistance, from.Y);
+            var toHalf = new PointF(from.X + distance / 2 + spreadDistance, to.Y);
 
             var path = new GraphicsPath();
-            PointF[] bezierPoints = {from, fromHalf, toHalf, to};
-            path.AddBeziers(bezierPoints);
+            PointF[] pathPoints = {from, fromHalf, toHalf, to};
+            
+            if (_wireStyle == EWireStyle.StepLine) {
+                path.AddLines(pathPoints);
+            }
+
+            if (_wireStyle == EWireStyle.Bezier) {
+                path.AddBeziers(pathPoints);
+            }
+            
             g.DrawPath(pen, path);
-            var points = path.PathPoints;
         }
 
         #endregion

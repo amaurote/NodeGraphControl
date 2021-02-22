@@ -212,7 +212,12 @@ namespace NodeGraphControl.Elements {
                     var socketIn = (SocketIn) socket;
 
                     // draw socket
-                    DrawSocket(g, socketIn.Pivot, (socketIn.InputConnection != null));
+                    DrawSocket(
+                        g,
+                        socketIn.Pivot,
+                        CommonStates.GetColorByType(socketIn.ValueType),
+                        (socketIn.InputConnection != null)
+                    );
 
                     // draw socket caption
                     DrawSocketCaption(g,
@@ -224,7 +229,12 @@ namespace NodeGraphControl.Elements {
                     var socketOut = (SocketOut) socket;
 
                     // draw socket
-                    DrawSocket(g, socketOut.Pivot, (socketOut.OutputConnections.Count > 0));
+                    DrawSocket(
+                        g,
+                        socketOut.Pivot,
+                        CommonStates.GetColorByType(socketOut.ValueType),
+                        (socketOut.OutputConnections.Count > 0)
+                    );
 
                     // draw socket caption
                     DrawSocketCaption(g,
@@ -234,8 +244,7 @@ namespace NodeGraphControl.Elements {
             }
         }
 
-        private void DrawSocket(Graphics g, PointF center, bool fill) {
-            var eColor = Color.Fuchsia;
+        private void DrawSocket(Graphics g, PointF center, Color eColor, bool fill) {
             var ePen = new Pen(eColor, 1.8f);
             var eX = center.X - SocketHeight / 2f;
             var eY = center.Y - SocketHeight / 2f;
