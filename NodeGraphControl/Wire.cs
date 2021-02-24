@@ -1,8 +1,12 @@
 using System;
+using System.Drawing;
 using NodeGraphControl.Elements;
 
 namespace NodeGraphControl {
-    public class Wire {
+    public class Wire : IElement {
+        
+        public Region Region { get; set; }
+        
         private SocketOut _from;
 
         public SocketOut From {

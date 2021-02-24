@@ -291,7 +291,7 @@ namespace NodeGraphControl {
             
             // CompositingQuality dependent on zoom value.
             // Close view uses HightSpeed, distant view is GammaCorrected (high quality)
-            g.CompositingQuality = zoom <= 1f ? CompositingQuality.GammaCorrected : CompositingQuality.HighSpeed;
+            g.CompositingQuality = zoom < 1f ? CompositingQuality.GammaCorrected : CompositingQuality.HighSpeed;
 
             // update matrices
             UpdateMatrices();
@@ -320,7 +320,13 @@ namespace NodeGraphControl {
                 var yTo = wire.To.BoundsFull.Y + wire.To.BoundsFull.Height / 2;
 
                 var wireColor = CommonStates.GetColorByType(wire.From.ValueType);
-                DrawWire(g, new Pen(wireColor, 2f), xFrom, yFrom, xTo, yTo);
+                var wireWidth = (wire == lastHover) ? 6f : 2f;
+                var wireRegion = DrawWire(g, new Pen(wireColor, wireWidth), xFrom, yFrom, xTo, yTo);
+
+                wire.Region = wireRegion;
+                
+                if(_renderBounds)
+                    g.FillRegion(new SolidBrush(Color.Brown),wireRegion);
             }
 
             // draw all nodes
@@ -410,33 +416,35 @@ namespace NodeGraphControl {
             }
         }
 
-        private void DrawWire(Graphics g, Pen pen, float xFrom, float yFrom, float xTo, float yTo) {
+        private Region DrawWire(Graphics g, Pen pen, float xFrom, float yFrom, float xTo, float yTo) {
             var from = new PointF(xFrom, yFrom);
             var to = new PointF(xTo, yTo);
 
+            var path = new GraphicsPath(FillMode.Winding);
+
             if (_wireStyle == EWireStyle.Line) {
-                g.DrawLine(pen, from, to);
-                return;
-            }
+                path.AddLine(from, to);
+            } else {
+                var distance = to.X - from.X;
+                var spreadDistance = ((distance / 2f) / 100f) * _wireMiddlePointsSpread;
 
-            var distance = to.X - from.X;
-            var spreadDistance = ((distance / 2f) / 100f) * _wireMiddlePointsSpread;
-            
-            var fromHalf = new PointF(from.X + distance / 2 - spreadDistance, from.Y);
-            var toHalf = new PointF(from.X + distance / 2 + spreadDistance, to.Y);
+                var fromHalf = new PointF(from.X + distance / 2 - spreadDistance, from.Y);
+                var toHalf = new PointF(from.X + distance / 2 + spreadDistance, to.Y);
 
-            var path = new GraphicsPath();
-            PointF[] pathPoints = {from, fromHalf, toHalf, to};
-            
-            if (_wireStyle == EWireStyle.StepLine) {
-                path.AddLines(pathPoints);
-            }
+                PointF[] pathPoints = {from, fromHalf, toHalf, to};
 
-            if (_wireStyle == EWireStyle.Bezier) {
-                path.AddBeziers(pathPoints);
+                if (_wireStyle == EWireStyle.StepLine)
+                    path.AddLines(pathPoints);
+
+                if (_wireStyle == EWireStyle.Bezier) {
+                    path.AddBeziers(pathPoints);
+                }
             }
             
             g.DrawPath(pen, path);
+            
+            path.Widen(new Pen(Color.Empty, 10f));
+            return new Region(path);
         }
 
         #endregion
@@ -531,6 +539,8 @@ namespace NodeGraphControl {
         private bool leftMouseButton = false;
         private bool rightMouseButton = false;
 
+        private IElement lastHover;
+
         private void UpdateOriginalLocation(Point location) {
             var points = new PointF[] {location};
             inverse_transformation.TransformPoints(points);
@@ -586,6 +596,21 @@ namespace NodeGraphControl {
                 if (element == null) {
                     _command = CommandMode.MarqueSelection;
                     return;
+                }
+
+                if (element is Wire wire) {
+                    _command = CommandMode.Wiring;
+                    var from = wire.From.Pivot;
+                    var to = wire.To.Pivot;
+                    var fromDistance = Utils.Distance(from, originalLocation);
+                    var toDistance = Utils.Distance(to, originalLocation);
+                    if (fromDistance < toDistance) {
+                        _tempWire = new Wire {From = null, To = wire.To};
+                        Disconnect(wire);
+                    } else {
+                        _tempWire = new Wire {From = wire.From, To = null};
+                        Disconnect(wire);
+                    }
                 }
 
                 if (element is SocketIn socketIn) {
@@ -703,7 +728,7 @@ namespace NodeGraphControl {
                     }
 
                     snappedLocation = lastLocation = currentLocation;
-                    Refresh();
+                    Invalidate();
                     return;
                 }
                 case CommandMode.Wiring: {
@@ -733,8 +758,15 @@ namespace NodeGraphControl {
 
                     return;
 
-                default:
-                case CommandMode.Edit:
+                default: {
+                    var element = FindElementAtOriginal(transformed_location);
+
+                    if (lastHover != element) {
+                        lastHover = element;
+                        Invalidate();
+                        return;
+                    }
+                }
                     break;
             }
         }
@@ -995,26 +1027,20 @@ namespace NodeGraphControl {
                     return node;
                 }
             }
+            
+            // find wire
+            for (int i = _connections.Count - 1; i >= 0; i--) {
+                var wire = _connections[i];
+                if (wire.Region != null && wire.Region.IsVisible(point))
+                    return wire;
+            }
 
             return null;
         }
 
         private IElement FindElementAtMousePoint(Point mouseClickPosition) {
             var position = GetTranslatedPosition(mouseClickPosition);
-
-            foreach (var node in _graphNodes) {
-                // try to find socket
-                foreach (var socket in node.Sockets.Where(socket => socket.BoundsFull.Contains(position))) {
-                    return socket;
-                }
-
-                // try to find node
-                if (node.BoundsFull.Contains(position)) {
-                    return node;
-                }
-            }
-
-            return null;
+            return FindElementAtOriginal(position);
         }
 
         #endregion
