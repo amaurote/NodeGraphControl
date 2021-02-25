@@ -1,6 +1,6 @@
 # NodeGraphControl
 
-NodeGraphControl is .NET library that provides a component for node-based user interface. Custom nodes can be created easily by extending AbstractNode class and added to context of the component.
+NodeGraphControl is .NET library that provides a component for node-based user interface. Custom nodes can be created easily by extending AbstractNode class and adding to context of the component.
 
 ![Screenshot of sample use of NodeGraphControl](res/sample_use.PNG)
 
