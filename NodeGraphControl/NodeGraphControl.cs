@@ -150,7 +150,7 @@ namespace NodeGraphControl {
         #region EventHandlers
 
         private void n_InvokeRepaint(object sender, EventArgs e) {
-            Refresh();
+            Invalidate();
         }
         
         #endregion
