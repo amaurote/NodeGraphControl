@@ -22,8 +22,12 @@ namespace NodeGraphControl {
         }
 
         public static double Distance(PointF p1, PointF p2) {
-            double xDelta = p1.X - p2.X;
-            double yDelta = p1.Y - p2.Y;
+            return Distance(p1.X, p1.Y, p2.X, p2.Y);
+        }
+
+        public static double Distance(float x1, float y1, float x2, float y2) {
+            double xDelta = x1 - x2;
+            double yDelta = y1 - y2;
 
             return Math.Sqrt(Math.Pow(xDelta, 2) + Math.Pow(yDelta, 2));
         }

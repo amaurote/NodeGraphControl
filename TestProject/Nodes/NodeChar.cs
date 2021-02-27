@@ -6,7 +6,7 @@ using NodeGraphControl.Elements;
 
 namespace TestProject.Nodes {
     public class NodeChar : AbstractNode {
-        private readonly AbstractSocket _outputChar;
+        private readonly SocketOut _outputChar;
 
         [Category("Settings")] public char DefaultOutputValue { get; set; } = 'F';
 

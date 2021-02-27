@@ -30,7 +30,7 @@ namespace NodeGraphControl.Elements {
 
         protected float FooterHeight;
 
-        private const float SocketHeight = 8;
+        private const float SocketSize = 8;
 
         [Category("Location"), ReadOnly(true)] public Point Location { get; set; }
 
@@ -43,9 +43,7 @@ namespace NodeGraphControl.Elements {
 
         protected Color HeaderColor { get; set; } // TODO add default color
         protected Color BaseColor { get; set; } // TODO add default color
-
-        // internal Control CustomEditor { get; set; }      TODO not implemented yet
-
+        
         [Browsable(false)] public bool Selected { get; set; } = false;
 
         [Category("Bounds")] public RectangleF BoundsFull { get; private set; }
@@ -89,7 +87,7 @@ namespace NodeGraphControl.Elements {
 
         public void Disconnect() {
             foreach (var socket in Sockets) {
-                socket.Disconnect();
+                socket.DisconnectAll();
             }
         }
 
@@ -99,7 +97,7 @@ namespace NodeGraphControl.Elements {
 
         public void Calculate() {
             if (MinBaseHeight == 0)
-                MinBaseHeight = SocketHeight * 4; // default minimum height
+                MinBaseHeight = SocketSize * 4; // default minimum height
 
             var countIn = 0;
             var countOut = 0;
@@ -109,7 +107,7 @@ namespace NodeGraphControl.Elements {
                 if (socket.GetType() == typeof(SocketOut)) countOut++;
             }
 
-            var socketsHeight = (SocketHeight * 4) * Math.Max(countIn, countOut);
+            var socketsHeight = (SocketSize * 4) * Math.Max(countIn, countOut);
 
             _baseHeight = Math.Max(MinBaseHeight, socketsHeight);
             FullHeight = HeaderHeight + _baseHeight + FooterHeight;
@@ -128,19 +126,18 @@ namespace NodeGraphControl.Elements {
             foreach (var socket in Sockets) {
                 if (socket.GetType() == typeof(SocketIn)) {
                     countIn++;
-                    socket.SetPivot(new PointF(Location.X, Location.Y + HeaderHeight + _socketSplit * countIn));
+                    socket.Pivot = new PointF(Location.X, Location.Y + HeaderHeight + _socketSplit * countIn);
                 }
 
                 if (socket.GetType() == typeof(SocketOut)) {
                     countOut++;
-                    socket.SetPivot(new PointF(Location.X + NodeWidth,
-                        Location.Y + HeaderHeight + _socketSplit * countOut));
+                    socket.Pivot = new PointF(Location.X + NodeWidth, Location.Y + HeaderHeight + _socketSplit * countOut);
                 }
 
                 // update socket bounds
                 socket.BoundsFull = new RectangleF(
-                    socket.Pivot.X - SocketHeight / 2 - 1f,
-                    socket.Pivot.Y - SocketHeight / 2 - 1f, SocketHeight + 2, SocketHeight + 2);
+                    socket.Pivot.X - SocketSize / 2 - 1f,
+                    socket.Pivot.Y - SocketSize / 2 - 1f, SocketSize + 2, SocketSize + 2);
             }
         }
 
@@ -192,8 +189,7 @@ namespace NodeGraphControl.Elements {
                 var headerFont = new Font(FontFamily.GenericSansSerif, 9f, FontStyle.Bold);
 
                 g.DrawString(Name, headerFont, new SolidBrush(Color.LightGray), nodeStringPositionX, nodeTypePositionY);
-                g.DrawString(NodeType, headerFont, new SolidBrush(Color.Orange), nodeStringPositionX,
-                    nodeNamePositionY);
+                g.DrawString(NodeType, headerFont, new SolidBrush(Color.Orange), nodeStringPositionX, nodeNamePositionY);
             }
 
             // sockets
@@ -216,12 +212,13 @@ namespace NodeGraphControl.Elements {
                         g,
                         socketIn.Pivot,
                         CommonStates.GetColorByType(socketIn.ValueType),
-                        (socketIn.InputConnection != null)
+                        (socketIn.IsConnected()),
+                        socketIn.Hub
                     );
 
                     // draw socket caption
                     DrawSocketCaption(g,
-                        new PointF(socketIn.Pivot.X + SocketHeight, socketIn.Pivot.Y), socketIn, Alignment.Left
+                        new PointF(socketIn.Pivot.X + SocketSize, socketIn.Pivot.Y), socketIn, Alignment.Left
                     );
                 }
 
@@ -233,26 +230,34 @@ namespace NodeGraphControl.Elements {
                         g,
                         socketOut.Pivot,
                         CommonStates.GetColorByType(socketOut.ValueType),
-                        (socketOut.OutputConnections.Count > 0)
+                        (socketOut.IsConnected()),
+                        false
                     );
 
                     // draw socket caption
                     DrawSocketCaption(g,
-                        new PointF(socketOut.Pivot.X - SocketHeight, socketOut.Pivot.Y), socketOut, Alignment.Right
+                        new PointF(socketOut.Pivot.X - SocketSize, socketOut.Pivot.Y), socketOut, Alignment.Right
                     );
                 }
             }
         }
 
-        private void DrawSocket(Graphics g, PointF center, Color eColor, bool fill) {
+        private void DrawSocket(Graphics g, PointF center, Color eColor, bool fill, bool hub) {
             var ePen = new Pen(eColor, 1.8f);
-            var eX = center.X - SocketHeight / 2f;
-            var eY = center.Y - SocketHeight / 2f;
+            var eX = center.X - SocketSize / 2f;
+            var eY = center.Y - SocketSize / 2f;
 
-            if (fill)
-                g.FillEllipse(new SolidBrush(eColor), eX, eY, SocketHeight, SocketHeight);
-            else
-                g.DrawEllipse(ePen, eX, eY, SocketHeight, SocketHeight);
+            if (hub) {
+                if (fill)
+                    g.FillRectangle(new SolidBrush(eColor), eX + 2, eY - 1, SocketSize - 2, SocketSize + 1);
+                else
+                    g.DrawRectangle(ePen, eX + 2, eY - 1, SocketSize - 2, SocketSize + 1);
+            } else {
+                if (fill)
+                    g.FillEllipse(new SolidBrush(eColor), eX, eY, SocketSize, SocketSize);
+                else
+                    g.DrawEllipse(ePen, eX, eY, SocketSize, SocketSize);
+            }
         }
 
         private enum Alignment {
@@ -261,14 +266,14 @@ namespace NodeGraphControl.Elements {
             Center // just in case... why not have an option to align to center
         }
 
-        private Font SocketCaptionFont = new Font(new FontFamily("Helvetica"), 10f, FontStyle.Bold);
+        private readonly Font SocketCaptionFont = new Font(new FontFamily("Helvetica"), 10f, FontStyle.Bold);
 
         private void DrawSocketCaption(Graphics g, PointF center, AbstractSocket socket, Alignment alignment) {
             string text;
             Color textColor;
 
             if (CommonStates.SocketCaptionTypeToggle) {
-                text = socket.ValueType.ToString().Split('.').Last();
+                text = socket.ValueTypeStr;
                 textColor = Color.Goldenrod;
             } else {
                 text = socket.SocketName;

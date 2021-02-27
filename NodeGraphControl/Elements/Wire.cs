@@ -60,12 +60,12 @@ namespace NodeGraphControl {
         }
 
         public void Flow() {
-            _to.UpdateValue(_from.GetValue());
+            _to.UpdateValue(this, _from.Value);
         }
 
         public void Disconnect() {
-            _from.OutputConnections.Remove(this);
-            _to.Disconnect();
+            _from.Disconnect(this);
+            _to.Disconnect(this);
         }
     }
 }

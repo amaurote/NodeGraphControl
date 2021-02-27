@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NodeGraphControl.Elements {
     public class SocketOut : AbstractSocket {
-        public readonly List<Wire> OutputConnections = new List<Wire>();
+        private readonly List<Wire> OutputConnections = new List<Wire>();
 
-        public SocketOut(Type valueType, string name, AbstractNode owner) : base(valueType, owner) {
-            SocketName = name;
+        public SocketOut(Type valueType, string name, AbstractNode owner) : base(valueType, name, owner) {
         }
-
-        public override void UpdateValue(object value) {
+        
+        public object Value { get; private set; }
+        
+        public void UpdateValue(object value) {
             if(value.Equals(Value))
                 return;
             
@@ -23,10 +25,30 @@ namespace NodeGraphControl.Elements {
             }
         }
 
-        public override void Disconnect() {
+        public override void Connect(Wire wire) {
+            if (OutputConnections.Any(connection => wire.To == connection.To)) {
+                throw new Exception("Connection already exists");
+            } else {
+                OutputConnections.Add(wire);
+            }
+        }
+
+        public override void DisconnectAll() {
             for (var i = OutputConnections.Count - 1; i >= 0; i--) {
                 OutputConnections[i].Disconnect();
             }
+        }
+
+        public override void Disconnect(Wire wire) {
+            OutputConnections.Remove(wire);
+        }
+
+        public override bool IsConnected() {
+            return OutputConnections.Count > 0;
+        }
+
+        public override bool ContainsConnection(Wire wire) {
+            return OutputConnections.Contains(wire);
         }
     }
 }
