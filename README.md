@@ -12,15 +12,15 @@ Devices I use are synchronized with clouds and at the end of the day everything 
 
 Initial version.
 
-## Version 0.2-SNAPSHOT
+## Version 0.2
 
 ### Goals
 
 1. ~~Improve graphic performance~~ (resolved 21.2.21)
 2. ~~Fix zoom - it should be transforming towards center of the screen~~ (resolved 21.2.21 - wow, such a productive Sunday)
 3. ~~Make wires selectable~~ (resolved 24.2.21)
-4. Create new element 'SocketHub' - basically an input socket capable to be connected by multiple wires (requires point 3. to be completed)
-5. Code refactoring, spaghetti resolving
+4. ~~Create new element 'SocketHub' - basically an input socket capable to be connected by multiple wires (requires point 3. to be completed)~~ (resolved 27.2.21)
+5. ~~Code refactoring, spaghetti resolving~~ (partially resolved)
 
 ### Improvements
 
@@ -30,7 +30,11 @@ Initial version.
 * (21.2.21) Space key now resets view position
 * (22.2.21) Added feature to optionally pair types with colors in which wires and sockets will be drown
 * (22.2.21) Added experimental wire style appearance properties
-* (24.2.21) Wires can be handled directly by dragging.
+* (24.2.21) Wires can be handled directly by dragging
+* (27.2.21) Socket logic was reworked
+* (27.2.21) SocketIn is now capable to take multiple connections
+
+![Screenshot of sample use of NodeGraphControl](res/sample_use2.PNG)
 
 ## UI controls
 
