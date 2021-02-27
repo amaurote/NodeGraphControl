@@ -61,7 +61,6 @@
         <Compile Include="Nodes\NodeMonitor.cs" />
         <Compile Include="Nodes\NodeString.cs" />
         <Compile Include="Nodes\NodeStringXOR.cs" />
-        <Compile Include="Nodes\NodeTestHub.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <EmbeddedResource Include="MainForm.resx">
