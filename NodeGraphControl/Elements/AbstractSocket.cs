@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 
 namespace NodeGraphControl.Elements {
     public abstract class AbstractSocket : IElement {
@@ -8,6 +9,8 @@ namespace NodeGraphControl.Elements {
         public string SocketDescription { get; set; }
 
         public readonly Type ValueType;
+
+        public string ValueTypeStr;
 
         protected readonly AbstractNode Owner;
 
@@ -18,28 +21,23 @@ namespace NodeGraphControl.Elements {
             set => _bounds = value;
         }
 
-        protected PointF _pivot; 
-        public PointF Pivot {
-            get { return _pivot; }
-        }
-        
-        protected object Value { get; set; }
+        public PointF Pivot { get; set; }
 
-        public AbstractSocket(Type valueType, AbstractNode owner) {
+        public AbstractSocket(Type valueType, string socketName, AbstractNode owner) {
             ValueType = valueType;
+            SocketName = socketName;
             Owner = owner;
+            ValueTypeStr = ValueType.ToString().Split('.').Last();
         }
 
-        public abstract void UpdateValue(object value);
+        public abstract void Connect(Wire wire);
+        
+        public abstract void DisconnectAll();
 
-        public abstract void Disconnect();
+        public abstract void Disconnect(Wire wire);
 
-        public object GetValue() {
-            return Value;
-        }
+        public abstract bool IsConnected();
 
-        public void SetPivot(PointF pivot) {
-            _pivot = pivot;
-        } 
+        public abstract bool ContainsConnection(Wire wire);
     }
 }

@@ -9,7 +9,7 @@ using NodeGraphControl.Elements;
 
 namespace TestProject.Nodes {
     public class NodeMonitor : AbstractNode {
-        private readonly AbstractSocket _inputObject;
+        private readonly SocketIn _inputObject;
 
         private const char WhiteChar = '░';
         private const char UnprintableChar = '☺';
@@ -20,7 +20,7 @@ namespace TestProject.Nodes {
         [Category("Monitor")]
         public string InputToString {
             get {
-                return _inputObject.GetValue().ToString();
+                return _inputObject.GetSingleValue().ToString();
             }
         }
 
@@ -30,7 +30,7 @@ namespace TestProject.Nodes {
         public NodeMonitor(Point location) {
             Location = location;
 
-            _inputObject = new SocketIn(typeof(object), "Input", this);
+            _inputObject = new SocketIn(typeof(object), "Input", this, false);
 
             Name = "Monitor";
             NodeType = GetType().ToString().Split('.').Last();
@@ -65,7 +65,7 @@ namespace TestProject.Nodes {
         }
 
         public override void Execute() {
-            var value = _inputObject.GetValue();
+            var value = _inputObject.GetSingleValue();
             if (value != null) {
                 EditText(value.ToString());
             } else {

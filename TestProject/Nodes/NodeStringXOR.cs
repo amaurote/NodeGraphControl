@@ -6,10 +6,10 @@ using NodeGraphControl.Elements;
 
 namespace TestProject.Nodes {
     public class NodeStringXOR : AbstractNode {
-        private readonly AbstractSocket _inputString;
-        private readonly AbstractSocket _inputKey;
-        private readonly AbstractSocket _inputEnabled;
-        private readonly AbstractSocket _outputString;
+        private readonly SocketIn _inputString;
+        private readonly SocketIn _inputKey;
+        private readonly SocketIn _inputEnabled;
+        private readonly SocketOut _outputString;
 
         private const string DefaultOutputValue = "";
 
@@ -19,9 +19,9 @@ namespace TestProject.Nodes {
         public NodeStringXOR(Point location) {
             Location = location;
 
-            _inputString = new SocketIn(typeof(string), "Input string", this);
-            _inputKey = new SocketIn(typeof(char), "Input key", this);
-            _inputEnabled = new SocketIn(typeof(bool), "Input enabled", this);
+            _inputString = new SocketIn(typeof(string), "Input string", this, false);
+            _inputKey = new SocketIn(typeof(char), "Input key", this, false);
+            _inputEnabled = new SocketIn(typeof(bool), "Input enabled", this, false);
             _outputString = new SocketOut(typeof(string), "Output string", this);
 
             Name = "String XOR";
@@ -44,9 +44,9 @@ namespace TestProject.Nodes {
         }
 
         public override void Execute() {
-            var inputString = _inputString.GetValue() as string;
-            var inputKey = _inputKey.GetValue() is char ? (char) _inputKey.GetValue() : '\0';
-            var inputEnabled = _inputEnabled.GetValue();
+            var inputString = _inputString.GetSingleValue() as string;
+            var inputKey = _inputKey.GetSingleValue() is char ? (char) _inputKey.GetSingleValue() : '\0';
+            var inputEnabled = _inputEnabled.GetSingleValue();
 
             if (inputEnabled == null || (bool) inputEnabled == false) {
                 _outputString.UpdateValue(DefaultOutputValue);

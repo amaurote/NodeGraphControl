@@ -1,8 +1,12 @@
 using System;
+using System.Drawing;
 using NodeGraphControl.Elements;
 
 namespace NodeGraphControl {
-    public class Wire {
+    public class Wire : IElement {
+        
+        public Region Region { get; set; }
+        
         private SocketOut _from;
 
         public SocketOut From {
@@ -56,12 +60,12 @@ namespace NodeGraphControl {
         }
 
         public void Flow() {
-            _to.UpdateValue(_from.GetValue());
+            _to.UpdateValue(this, _from.Value);
         }
 
         public void Disconnect() {
-            _from.OutputConnections.Remove(this);
-            _to.Disconnect();
+            _from.Disconnect(this);
+            _to.Disconnect(this);
         }
     }
 }

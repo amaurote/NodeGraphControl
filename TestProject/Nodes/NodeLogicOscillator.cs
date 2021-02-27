@@ -9,7 +9,7 @@ namespace TestProject.Nodes {
     public class NodeLogicOscillator : AbstractNode {
         private Timer _timer = new Timer();
 
-        private readonly AbstractSocket _output;
+        private readonly SocketOut _output;
 
         public int Interval {
             get { return _timer.Interval; }

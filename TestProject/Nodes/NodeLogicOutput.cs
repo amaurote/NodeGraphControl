@@ -5,8 +5,8 @@ using NodeGraphControl.Elements;
 
 namespace TestProject.Nodes {
     public class NodeLogicOutput : AbstractNode {
-        private readonly AbstractSocket _outputH;
-        private readonly AbstractSocket _outputL;
+        private readonly SocketOut _outputH;
+        private readonly SocketOut _outputL;
 
         public NodeLogicOutput() : this(new Point(0, 0)) {
         }

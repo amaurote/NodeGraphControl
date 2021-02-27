@@ -52,6 +52,9 @@
         <Compile Include="MainForm.Designer.cs">
             <DependentUpon>MainForm.cs</DependentUpon>
         </Compile>
+        <Compile Include="Nodes\MathNodes\MathAvgNode.cs" />
+        <Compile Include="Nodes\MathNodes\MathNumNode.cs" />
+        <Compile Include="Nodes\MathNodes\MathSumNode.cs" />
         <Compile Include="Nodes\NodeChar.cs" />
         <Compile Include="Nodes\NodeLogicOscillator.cs" />
         <Compile Include="Nodes\NodeLogicOutput.cs" />
