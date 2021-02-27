@@ -36,6 +36,13 @@ Initial version.
 
 ![Screenshot of sample use of NodeGraphControl](res/sample_use2.PNG)
 
+## Version 0.3-SNAPSHOT
+
+### Goals
+1. Currently the NodeGraph is 'always running'. Run strategy needs to be implemented. In AbstractNode there should be methods like Stop() and Reset() in addition to Execute()
+2. Graphic performance was significantly improved in version 0.2, however, repaint strategy should be reconsidered again
+3. Code refactoring
+
 ## UI controls
 
 **Left mouse button** - select, marque select, move, wiring
