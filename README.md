@@ -40,8 +40,12 @@ Initial version.
 
 ### Goals
 1. Currently the NodeGraph is 'always running'. Run strategy needs to be implemented. In AbstractNode there should be methods like Stop() and Reset() in addition to Execute()
-2. Graphic performance was significantly improved in version 0.2, however, repaint strategy should be reconsidered again
-3. Code refactoring
+2. AbstractNode should have context menu with options like delete, run, reset, etc
+3. Selection should have context menu with options like delete-selection, copy, paste
+4. Implement copy, paste
+5. ~~Implement undo, redo~~ TODO in another version
+6. Graphic performance was significantly improved in version 0.2, however, repaint strategy should be reconsidered again
+7. Code refactoring
 
 ## UI controls
 
